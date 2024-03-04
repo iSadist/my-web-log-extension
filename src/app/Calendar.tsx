@@ -12,6 +12,9 @@ const SessionCalendar = () => {
   const [startTime, setStartTime] = useState('');
   const [endTime, setEndTime] = useState('');
   const [dates, setDates] = useState<Value>();
+  const [success, setSuccess] = useState(false);
+  const [error, setError] = useState(false);
+  const [message, setMessage] = useState('');
 
   const handleDateChange = (value: Value) => {
     setDates(value);
@@ -43,7 +46,69 @@ const SessionCalendar = () => {
   }
 
   const submit = () => {
-    console.log('submitting', sessionId, dates, startTime, endTime);
+    sendRequest();
+  }
+
+  const formatDate = (date: Date) => {
+    const year = date.getFullYear();
+    const month = date.getMonth() + 1;
+    const day = date.getDate();
+
+    return `${year}-${month}-${day}`;
+  }
+
+  const sendRequest = () => {
+    // Send a POST request to the server with the session ID, date, start time, and end time.
+    const date = formatDate(dates as Date);
+
+    const url = 'http://localhost:3000/api/sessions';
+
+    const body = {
+        startDatum: date,
+        slutDatum: date,
+        startTid: startTime,
+        slutTid: endTime
+    }
+
+    const headers = {
+      'Content-Type': 'application/json',
+      'SESSION_ID': sessionId,
+      // More headers as needed
+    }
+
+    const options = {
+        method: 'POST',
+        headers: headers,
+        body: JSON.stringify(body)
+    }
+
+    fetch(url, options)
+      .then(response => {
+        if (response.ok) {
+          setResponse(true);
+        } else {
+          setResponse(false);
+        }
+      })
+      .catch(error => {
+      });
+
+    console.log('sending request', body);
+  }
+
+  const setResponse = (success: boolean) => {
+    if (success) {
+      setMessage('Request was successful!');
+      setSuccess(true);
+    } else {
+      setMessage('Request was not successful!');
+      setError(true);
+    }
+
+    setTimeout(() => {
+      setSuccess(false);
+      setError(false);
+    }, 3000);
   }
 
   return (
@@ -62,7 +127,7 @@ const SessionCalendar = () => {
             value={dates}
         />
 
-        {dates && <p>Selected date: {dates.toString()}</p>}
+        {dates && <p>Selected date: {formatDate(dates as Date)}</p>}
 
         <label>
             Start Time:
@@ -88,6 +153,10 @@ const SessionCalendar = () => {
         >
             Submit
         </button>
+        <div>
+            {success && <p>{message}</p>}
+            {error && <p>{message}</p>}
+        </div>
     </div>
   );
 };
